@@ -11,7 +11,6 @@ def minput(): return map(int, ipt().split())
 t = int(ipt())
 for _ in range(t):
     n, m = minput()
-    air = []
     for _ in range(m):
-        air.append(list(minput()))
+        ipt()
     print(n-1)
