@@ -8,16 +8,16 @@ ipt = sys.stdin.readline
 def minput(): return map(int, ipt().split())
 
 
-def bfs(graph, i, visited):
+def dfs(graph, i, visited):
     global answer
-    q = deque()
+    q = []
     if not visited[i]:
         answer += 1
         visited[i] = True
         for j in graph[i]:
             q.append(j)
     while q:
-        temp = q.popleft()
+        temp = q.pop()
         if not visited[temp]:
             visited[temp] = True
             for j in graph[temp]:
@@ -32,5 +32,5 @@ for _ in range(m):
     graph[u].append(v)
     graph[v].append(u)
 for i in range(1, n+1):
-    bfs(graph, i, visited)
+    dfs(graph, i, visited)
 print(answer)
