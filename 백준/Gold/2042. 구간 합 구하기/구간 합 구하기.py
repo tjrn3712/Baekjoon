@@ -46,12 +46,14 @@ class SegmentTree:
         # lazy propagation(non-recursive)
 
 
+def merge(a, b):
+    return a+b
 def main():
     n, m, k = minput()
     arr = []
     for _ in range(n):
         arr.append(int(input()))
-    seg = SegmentTree(arr, lambda a, b: a+b, 0)
+    seg = SegmentTree(arr, merge, 0)
     for _ in range(m+k):
         a, b, c = minput()
         if a == 1:
