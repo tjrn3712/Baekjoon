@@ -6,6 +6,7 @@ import random
 import itertools
 input = sys.stdin.readline
 INF = float('inf')
+sys.set_int_max_str_digits(1000000)
 MOD = 10**9+7
 def minput(): return map(int, input().split())
 
