@@ -1,51 +1,54 @@
-import sys
+import sys, time, math, heapq, random, itertools, operator, io, os, bisect
 from collections import deque
-import math
-import heapq
-import random
-ipt = sys.stdin.readline
-def minput(): return map(int, ipt().split())
-mod = 10**9+7
+input = sys.stdin.readline
+inf = float('inf')
+mod = 998244353
+def minput(): return map(int, input().split())
 
-def init(start, end, index):
-    if start == end:
-        tree[index] = [arr[start], start]
-        return tree[index]
-    mid = (start+end) // 2
-    tree[index] = min(init(start, mid, index*2), init(mid+1, end, index*2+1))
-    return tree[index]
+class SegmentTree:
+    # non-recursive
+    # by tjrn3712(2024.11.07)
+    def __init__(self, arr, merge, i):
+        self.i = i
+        self.N = len(arr)
+        self.tree = [i for _ in range(self.N << 1)]
+        self.merge = merge
+        for j in range(self.N):
+            self.tree[self.N+j] = arr[j]
+        for j in range(self.N-1, 0, -1):
+            self.tree[j] = merge(self.tree[j<<1], self.tree[j<<1|1])
+
+    def update_index(self, index, value):
+        index += self.N
+        self.tree[index] = value
+        while index > 1:
+            self.tree[index>>1] = self.merge(self.tree[index], self.tree[index^1])
+            index >>= 1
+
+    # [left, right]
+    def query(self, left, right):
+        left += self.N
+        right += self.N+1
+        result = self.i
+        while left < right:
+            if left & 1:
+                result = self.merge(result, self.tree[left])
+                left += 1
+            if right & 1:
+                right -= 1
+                result = self.merge(result, self.tree[right])
+            left >>= 1
+            right >>= 1
+        return result
 
 
-def query(start, end, index, left, right):
-    if start > right or end < left:
-        return [mod, 0]
-    if start >= left and end <= right:
-        return tree[index]
-    mid = (start+end) // 2
-    return min(query(start, mid, index*2, left, right), query(mid+1, end, index*2+1, left, right))
-
-def update(start, end, index, i, value):
-    if start > i or end < i:
-        return
-    if start == end:
-        tree[index] = [value, i]
-        return
-    mid = (start+end) // 2
-    update(start, mid, index * 2, i, value)
-    update(mid + 1, end, index * 2 + 1, i, value)
-    tree[index] = min(tree[index*2], tree[index*2+1])
-    return
-
-
-n = int(ipt())
-tree = [0]*2*2**math.ceil(math.log(n, 2))
-arr = list(minput())
-init(0, n-1, 1)
-m = int(ipt())
-for _ in range(m):
-    a, b, c = minput()
-    if a == 1:
-        update(0, n-1, 1, b-1, c)
-    elif a == 2:
-        print(query(0, n-1, 1, b-1, c-1)[1]+1)
-
+n = int(input())
+a = [*minput()]
+for i in range(n):
+    a[i] = [a[i], i]
+m = int(input())
+seg = SegmentTree(a, min, [mod<<10,mod])
+for i in range(m):
+    a,b,c = minput()
+    if a == 1: seg.update_index(b-1,[c,b-1])
+    else: print(seg.query(b-1,c-1)[1]+1)
