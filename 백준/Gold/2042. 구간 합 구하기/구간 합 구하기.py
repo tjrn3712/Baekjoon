@@ -60,5 +60,5 @@ def main():
             seg.update_index(b-1, c)
         elif a == 2:
             print(seg.query(b-1, c))
-if __name__=='__main__':
-    main()
+main()
+
