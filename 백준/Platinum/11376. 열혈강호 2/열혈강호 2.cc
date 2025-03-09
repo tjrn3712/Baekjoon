@@ -442,7 +442,7 @@ void solve(){
 	ll n,m,k,t,a,job[1001]={};
 	//cin>>n>>m>>k;
 	cin>>n>>m;
-	Dinic dn(2003, 0, 2002);
+	PushRelabel dn(2003, 0, 2002);
 	dn.add_edge(0,2001,n);
 	for (int i=1;i<=n;i++){
 		cin>>t;
