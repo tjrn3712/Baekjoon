@@ -6,6 +6,7 @@
 using namespace std;
 typedef long long ll;
 typedef long double ld;
+const int INF = 1000000000;
 
 // 벌캠
 const int mod = 998244353;
@@ -177,6 +178,209 @@ public:
     }
 };
 
+// 구조체 push-relabel, worst: O(V^3)
+// PushRelabel p(N, S, T), p.add_edge(N, S, T), p.flow()
+struct Edge {
+    int v, rev;
+    ll cap;
+};
+
+struct PushRelabel {
+    int n, s, t;
+    vector<vector<Edge>> adj;    // 각 노드의 인접 리스트
+    vector<int> height;          // 각 노드의 높이
+    vector<int> count;           // 각 높이를 가진 노드의 수 (gap relabeling에 사용)
+    vector<ll> excess;           // 각 노드에 쌓인 과잉 유량
+    vector<int> cur;             // 각 노드에서 현재 검사 중인 간선의 인덱스
+    deque<int> active;         // 과잉 유량이 남은 활성 노드들
+
+    // 생성자: 노드 수 n, source s, sink t (0-indexed)
+    PushRelabel(ll n, ll s, ll t) : n(n), s(s), t(t) {
+        adj.resize(n);
+        height.assign(n, 0);
+        count.assign(2 * n, 0);
+        excess.assign(n, 0);
+        cur.assign(n, 0);
+    }
+    
+    // u에서 v로 용량 cap인 간선을 추가 (역간선은 초기 용량 0)
+    void add_edge(ll u, ll v, ll cap) {
+        Edge a = {v, (int)adj[v].size(), cap};
+        Edge b = {u, (int)adj[u].size(), 0};
+        adj[u].push_back(a);
+        adj[v].push_back(b);
+    }
+    
+    // push 연산: u에서 인접 노드 v로 가능한 만큼 유량을 밀어낸다.
+    void push(int u, int i) {
+        Edge &e = adj[u][i];
+        int v = e.v;
+        ll d = min(excess[u], e.cap);
+        if(d > 0 && height[u] == height[v] + 1) {
+            e.cap -= d;
+            adj[v][e.rev].cap += d;
+            excess[u] -= d;
+            excess[v] += d;
+            if(v != s && v != t && excess[v] == d)
+                active.push_back(v);
+        }
+    }
+    
+    // relabel 연산: u에서 더 이상 밀어낼 간선이 없을 때, 인접 노드들 중 남은 용량이 있는 최소 높이에 1을 더한 값으로 높이를 갱신.
+    void relabel(int u) {
+        int d = 2 * n;
+        for(auto &e : adj[u]) {
+            if(e.cap > 0)
+                d = min(d, height[e.v]);
+        }
+        int old = height[u];
+        height[u] = d + 1;
+        count[old]--;
+        count[height[u]]++;
+        // gap relabeling 최적화: 만약 old 높이를 가진 노드가 없으면,
+        // old보다 큰 높이를 가진 모든 노드의 높이를 n+1로 올려 활성화한다.
+        if(count[old] == 0)
+            for (int i = 0; i < n; i++) {
+                if(height[i] > old && height[i] < n) {
+                    count[height[i]]--;
+                    height[i] = n + 1;
+                    count[height[i]]++;
+                    if(i != s && i != t && excess[i] > 0)
+                        active.push_back(i);
+                }
+            }
+    }
+    
+    // discharge 연산: u의 남은 과잉 유량을 모두 인접 노드로 밀어낸다.
+    void discharge(int u) {
+        while(excess[u] > 0) {
+            if(cur[u] < (int)adj[u].size()) {
+                push(u, cur[u]);
+                if(excess[u] == 0) break;
+                cur[u]++;
+            } else {
+                relabel(u);
+                cur[u] = 0;
+            }
+        }
+    }
+    
+    // maxFlow 함수: 초기 preflow를 설정한 후 활성 노드를 처리하면서 최대 유량을 계산한다.
+    ll flow() {
+        // 초기화: source의 높이를 n으로 설정하고, preflow 전송
+        height[s] = n;
+        count[0] = n - 1;
+        count[n] = 1;
+        for(auto &e : adj[s]) {
+            if(e.cap > 0) {
+                ll f = e.cap;
+                e.cap = 0;
+                adj[e.v][e.rev].cap += f;
+                excess[e.v] += f;
+                excess[s] -= f;
+                if(e.v != s && e.v != t)
+                    active.push_back(e.v);
+            }
+        }
+        // 활성 노드들을 순차적으로 처리(discharge)
+        while(!active.empty()) {
+            int u = active.front();
+            active.pop_front();
+            if(u != s && u != t)
+                discharge(u);
+        }
+        // source에서 보낸 유량은, 역간선에 저장된 유량의 합으로 계산된다.
+        ll flowVal = 0;
+        for(auto &e : adj[s])
+            flowVal += adj[e.v][e.rev].cap;
+        return flowVal;
+    }
+};
+
+// 디닉에서 쓰는 플로우 구조체
+struct FlowEdge {
+    int v, u;
+    long long cap, flow = 0;
+    FlowEdge(int v, int u, long long cap) : v(v), u(u), cap(cap) {}
+};
+// 구조체 디닉
+// Dinic d(N, S, T), d.add_edge(N, S, T), d.flow()
+struct Dinic {
+    const long long flow_inf = 1e18;
+    vector<FlowEdge> edges;
+    vector<vector<ll>> adj;
+    ll n, m = 0;
+    ll s, t;
+    vector<ll> level, ptr;
+    queue<ll> q;
+
+    Dinic(ll n, ll s, ll t) : n(n), s(s), t(t) {
+        adj.resize(n);
+        level.resize(n);
+        ptr.resize(n);
+    }
+
+    void add_edge(ll v, ll u, long long cap) {
+        edges.emplace_back(v, u, cap);
+        edges.emplace_back(u, v, 0);
+        adj[v].push_back(m);
+        adj[u].push_back(m + 1);
+        m += 2;
+    }
+
+    bool bfs() {
+        while (!q.empty()) {
+            ll v = q.front();
+            q.pop();
+            for (int id : adj[v]) {
+                if (edges[id].cap == edges[id].flow)
+                    continue;
+                if (level[edges[id].u] != -1)
+                    continue;
+                level[edges[id].u] = level[v] + 1;
+                q.push(edges[id].u);
+            }
+        }
+        return level[t] != -1;
+    }
+
+    long long dfs(ll v, long long pushed) {
+        if (pushed == 0)
+            return 0;
+        if (v == t)
+            return pushed;
+        for (ll& cid = ptr[v]; cid < (int)adj[v].size(); cid++) {
+            ll id = adj[v][cid];
+            ll u = edges[id].u;
+            if (level[v] + 1 != level[u])
+                continue;
+            long long tr = dfs(u, min(pushed, edges[id].cap - edges[id].flow));
+            if (tr == 0)
+                continue;
+            edges[id].flow += tr;
+            edges[id ^ 1].flow -= tr;
+            return tr;
+        }
+        return 0;
+    }
+
+    long long flow() {
+        long long f = 0;
+        while (true) {
+            fill(level.begin(), level.end(), -1);
+            level[s] = 0;
+            q.push(s);
+            if (!bfs())
+                break;
+            fill(ptr.begin(), ptr.end(), 0);
+            while (long long pushed = dfs(s, flow_inf)) {
+                f += pushed;
+            }
+        }
+        return f;
+    }
+};
+
 // 이분매칭
 // bipartate_matching(간선벡터, 노드벡터 A, 노트벡터 B, 1 (현재 노드번호 a in A), 방문벡터)
 bool bipartate_matching(auto adj, auto A, auto B, auto a, auto visited) {
@@ -233,34 +437,24 @@ void solve(){
     cin.tie(NULL);
     cout.tie(NULL);
 
-	ll n,m,k,A[1001],B[1001],t,a,ans=0,ans2=0;
-	vector<ll> adj[1001];
-	fill(A,A+1001,-1);
-	fill(B,B+1001,-1);
+	ll n,m,k,t,a,job[1001]={};
 	cin>>n>>m>>k;
 
+	PushRelabel dn(2003, 0, 2002);
+	dn.add_edge(0,2001,k);
 	for (int i=1;i<=n;i++){
 		cin>>t;
+		dn.add_edge(0,i,1);
+		dn.add_edge(2001,i,k);
 		while(t--) {
 			cin>>a;
-			adj[i].push_back(a);
+			job[a]=1;
+			dn.add_edge(i,1000+a,1);
 		}
 	}
-	bool visited[1001] = {false};
-	for (int i=1;i<=n;i++){
-		fill(visited, visited+1001, false);
-		if (bipartate_matching(adj,A,B,i,visited)) ans++;
-	}
-	bool chk=true,chk2=true;
-	while (chk&chk2){
-		chk2 = false;
-		for (int i=1;i<=n;i++){
-			fill(visited, visited+1001, false);
-			if (bipartate_matching(adj,A,B,i,visited)) {chk2=true;ans2++;}
-			if (ans2==k){chk=false;break;}
-		}
-	}
-	cout<<ans+ans2;
+	for (int i=1;i<=1000;i++) if (job[i]) dn.add_edge(i+1000,2002,1);
+	ll ans = dn.flow();
+	cout<<ans;
     return;
 }
 
