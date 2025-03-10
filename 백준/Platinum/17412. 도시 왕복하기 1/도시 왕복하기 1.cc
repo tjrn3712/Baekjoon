@@ -181,124 +181,116 @@ public:
 };
 
 // pushrelabel에서 쓰는 간선 구조체
-struct Edge {
-    int v, rev;
-    ll cap;
+template <class T> struct Edge {
+    int from, to, index;
+    T cap, flow;
+
+    Edge(int from, int to, T cap, T flow, int index): from(from), to(to), cap(cap), flow(flow), index(index) {}
 };
 // 구조체 push-relabel, worst: O(V^3)
 // PushRelabel p(N, S, T), p.add_edge(from, to, cap), p.flow()
-struct PushRelabel {
-    int n, s, t;
-    vector<vector<Edge>> adj;    // 각 노드의 인접 리스트
-    vector<int> height;          // 각 노드의 높이
-    vector<int> count;           // 각 높이를 가진 노드의 수 (gap relabeling에 사용)
-    vector<ll> excess;           // 각 노드에 쌓인 과잉 유량
-    vector<int> cur;             // 각 노드에서 현재 검사 중인 간선의 인덱스
-    deque<int> active;         // 과잉 유량이 남은 활성 노드들
+template <class T> struct PushRelabel {
+    int n;
+    vector <vector <Edge <T>>> adj;
+    vector <T> excess;
+    vector <int> dist, count;
+    vector <bool> active;
+    vector <vector <int>> B;
+    int b;
+    queue <int> Q;
 
-    // 생성자: 노드 수 n, source s, sink t (0-indexed)
-    PushRelabel(ll n, ll s, ll t) : n(n), s(s), t(t) {
-        adj.resize(n);
-        height.assign(n, 0);
-        count.assign(2 * n, 0);
-        excess.assign(n, 0);
-        cur.assign(n, 0);
+    PushRelabel (int n): n(n), adj(n) {}
+
+    void add_edge (int from, int to, int cap) {
+        adj[from].push_back(Edge <T>(from, to, cap, 0, adj[to].size()));
+        if (from == to) {
+            adj[from].back().index++;
+        }
+        adj[to].push_back(Edge <T>(to, from, 0, 0, adj[from].size() - 1));
+
     }
-    
-    // u에서 v로 용량 cap인 간선을 추가 (역간선은 초기 용량 0)
-    void add_edge(ll u, ll v, ll cap=1) {
-        Edge a = {v, (int)adj[v].size(), cap};
-        Edge b = {u, (int)adj[u].size(), 0};
-        adj[u].push_back(a);
-        adj[v].push_back(b);
-    }
-    
-    // push 연산: u에서 인접 노드 v로 가능한 만큼 유량을 밀어냄냄
-    void push(int u, int i) {
-        Edge &e = adj[u][i];
-        int v = e.v;
-        ll d = min(excess[u], e.cap);
-        if(d > 0 && height[u] == height[v] + 1) {
-            e.cap -= d;
-            adj[v][e.rev].cap += d;
-            excess[u] -= d;
-            excess[v] += d;
-            if(v != s && v != t && excess[v] == d)
-                active.push_back(v);
+
+    void Enqueue (int v) {
+        if (!active[v] && excess[v] > 0 && dist[v] < n) {
+            active[v] = true;
+            B[dist[v]].push_back(v);
+            b = max(b, dist[v]);
         }
     }
-    
-    // relabel 연산: u에서 더 이상 밀어낼 간선이 없을 때 
-	// 인접 노드들 중 남은 용량이 있는 최소 높이에 1을 더한 값으로 높이를 갱신함
-    void relabel(int u) {
-        int d = 2 * n;
-        for(auto &e : adj[u]) {
-            if(e.cap > 0)
-                d = min(d, height[e.v]);
-        }
-        int old = height[u];
-        height[u] = d + 1;
-        count[old]--;
-        count[height[u]]++;
 
-        // gap relabeling 최적화: 만약 old 높이를 가진 노드가 없으면
-        // old보다 큰 높이를 가진 모든 노드의 높이를 n+1로 올려 활성화함함
-        if(count[old] == 0)
-            for (int i = 0; i < n; i++) {
-                if(height[i] > old && height[i] < n) {
-                    count[height[i]]--;
-                    height[i] = n + 1;
-                    count[height[i]]++;
-                    if(i != s && i != t && excess[i] > 0)
-                        active.push_back(i);
-                }
-            }
+    void Push (Edge <T> &e) {
+        T amt = min(excess[e.from], e.cap - e.flow);
+        if (dist[e.from] == dist[e.to] + 1 && amt > T(0)) {
+            e.flow += amt;
+            adj[e.to][e.index].flow -= amt;
+            excess[e.to] += amt;    
+            excess[e.from] -= amt;
+            Enqueue(e.to);
+        }
     }
-    
-    // discharge 연산: u의 남은 과잉 유량을 모두 인접 노드로 밀어냄냄
-    void discharge(int u) {
-        while(excess[u] > 0) {
-            if(cur[u] < (int)adj[u].size()) {
-                push(u, cur[u]);
-                if(excess[u] == 0) break;
-                cur[u]++;
+
+    void Gap (int k) {
+        for (int v = 0; v < n; v++) if (dist[v] >= k) {
+            count[dist[v]]--;
+            dist[v] = max(dist[v], n);
+            count[dist[v]]++;
+            Enqueue(v);
+        }
+    }
+
+    void Relabel (int v) {
+        count[dist[v]]--;
+        dist[v] = n;
+        for (auto e: adj[v]) if (e.cap - e.flow > 0) {
+            dist[v] = min(dist[v], dist[e.to] + 1);
+        }
+        count[dist[v]]++;
+        Enqueue(v);
+    }
+
+    void Discharge(int v) {
+        for (auto &e: adj[v]) {
+            if (excess[v] > 0) {
+                Push(e);
             } else {
-                relabel(u);
-                cur[u] = 0;
+                break;
+            }
+        }
+
+        if (excess[v] > 0) {
+            if (count[dist[v]] == 1) {
+                Gap(dist[v]); 
+            } else {
+                Relabel(v);
             }
         }
     }
-    
-    // flow 함수: 초기 preflow를 설정한 후 활성 노드를 처리하면서 최대 유량을 계산
-    ll flow() {
-        // 초기화: source의 높이를 n으로 설정하고 preflow 전송
-        height[s] = n;
-        count[0] = n - 1;
-        count[n] = 1;
-        for(auto &e : adj[s]) {
-            if(e.cap > 0) {
-                ll f = e.cap;
-                e.cap = 0;
-                adj[e.v][e.rev].cap += f;
-                excess[e.v] += f;
-                excess[s] -= f;
-                if(e.v != s && e.v != t)
-                    active.push_back(e.v);
+
+    T flow (int s, int t) {
+        dist = vector <int>(n, 0), excess = vector<T>(n, 0), count = vector <int>(n + 1, 0), active = vector <bool>(n, false), B = vector <vector <int>>(n), b = 0;
+        
+        for (auto &e: adj[s]) {
+            excess[s] += e.cap;
+        }
+
+        count[0] = n;
+        Enqueue(s);
+        active[t] = true;
+        
+        while (b >= 0) {
+            if (!B[b].empty()) {
+                int v = B[b].back();
+                B[b].pop_back();
+                active[v] = false;
+                Discharge(v);
+            } else {
+                b--;
             }
         }
-        // 활성 노드들을 순차적으로 처리(discharge)
-        while(!active.empty()) {
-            int u = active.front();
-            active.pop_front();
-            if(u != s && u != t)
-                discharge(u);
-        }
-        // source에서 보낸 유량은 역간선에 저장된 유량의 합으로 계산됨됨
-        ll flowVal = 0;
-        for(auto &e : adj[s])
-            flowVal += adj[e.v][e.rev].cap;
-        return flowVal;
+        return excess[t];
     }
+
+    T GetMinCut (int s, int t, vector <int> &cut);
 };
 
 // 디닉에서 쓰는 간선 구조체
@@ -444,12 +436,12 @@ void solve(){
 	int n,p,u,v;
 	cin>>n>>p;
 
-	Dinic dn(401,1,2);
-	for (int i=1;i<=p;p--){
+	PushRelabel<int> dn(n+1);
+	for (int i=1;i<=p;i++){
 		cin>>u>>v;
-		dn.add_edge(u,v);
+		dn.add_edge(u,v,1);
 	}
-	cout<<dn.flow();
+	cout<<dn.flow(1,2);
 
     return;
 }
