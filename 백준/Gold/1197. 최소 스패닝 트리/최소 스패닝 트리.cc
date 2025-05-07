@@ -862,7 +862,7 @@ struct LinkCutTree : SplayTree{
 };
 
 struct UnionFind {
-    ll p[444444];
+    int p[10001];
     stack<tuple<int,int,int>> s;
     UnionFind () {
         memset(p, -1, sizeof(p));
@@ -889,7 +889,7 @@ struct UnionFind {
 };
 
 struct UnionFindAmortized {
-    ll p[10001]={};
+    int p[10001]={};
     int find (int x) {
         if (!p[x]) return x;
         p[x] = find(p[x]);
@@ -912,7 +912,7 @@ void solve(){
     }
 
     sort(edge.begin(), edge.end(),[](tuple<int,int,int> x, tuple<int,int,int> y)->bool{return get<0>(x)<get<0>(y);});
-    UnionFindAmortized UF;
+    UnionFind UF;
     for (int i=0;i<e;i++) {
         if (UF.uni(get<1>(edge[i]),get<2>(edge[i]))) {
             ans+=get<0>(edge[i]);
@@ -925,7 +925,7 @@ int main(){
     cin.tie(NULL);
     cout.tie(NULL);
     
-    ll t=1;
+    int t=1;
     //cin>>t;
     while(t--)solve();
 }
