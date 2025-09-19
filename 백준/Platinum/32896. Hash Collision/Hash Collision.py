@@ -1,3 +1,1 @@
-i=input
-print('?',n:=int(i()),1)
-print('!',c:=int(i()),c//n or i(f'? {n-c} 1 '))
+i=input;print('!',c:=int(i(f'? {(n:=int(i()))} 1 ')),c//n or i(f'? {n-c} 1 '))
