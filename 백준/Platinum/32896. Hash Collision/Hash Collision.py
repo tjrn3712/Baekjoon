@@ -1,4 +1,3 @@
-i=input
-p=print
+i,p=input,print
 p('?',n:=int(i()),1)
-p('!',c:=int(i()),n^c and(p('?',n-c,1)or i())or 1)
+p('!',c:=int(i()),c//n or i(f'? {n-c} 1\n'))
