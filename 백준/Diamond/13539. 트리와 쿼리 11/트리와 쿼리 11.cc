@@ -1,15 +1,14 @@
 #include <bits/stdc++.h>
-#pragma comment(linker, "/STACK:268435456");
 using namespace std;
 using ll=long long;
 
 struct LinkCutTree {
     struct Node {
         Node *l=NULL,*r=NULL,*p=NULL;
-        ll sz=1,value=0,sum=0;
+        ll sz=1,value=0,sum=0,lazy=0;
         bool inv=false;
     };
-    LinkCutTree::Node ptr[1234567];
+    LinkCutTree::Node ptr[123456];
     bool isRoot (Node* x) {
         return !x->p||(x!=x->p->l&&x!=x->p->r);
     }
@@ -135,6 +134,7 @@ struct LinkCutTree {
     }
     void MakeRoot (Node* x) {
         Access(x);
+        Splay(x);
         x->inv^=1;
     }
     ll VQuery (Node* x, Node* y) {
@@ -154,6 +154,15 @@ struct LinkCutTree {
         Splay(x);
         x->value = v;
         Update(x);
+    }
+    void PUpdate (Node* x, Node* y, ll v) {
+        Node* root = FindRoot(x);
+        MakeRoot(x);
+        Access(y);
+        Splay(x);
+        x->lazy+=v;
+        
+        MakeRoot(root);
     }
 }tree;
 
