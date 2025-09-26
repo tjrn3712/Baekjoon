@@ -1,0 +1,2 @@
+#define p scanf("%ld%d%ld"
+long i,s['力'],b,c;main(n){for(p,&n,&b,&c);i<n;p+5,s+n+i++));for(;--i;s[i]=s[i*2]+s[i*2+1]);for(;~p,&i,&b,&c);)if(b+=~-n,i^=2)for(c-=s[b];s[b]+=c,b/=2;);else{for(c+=n;b<c;b/=2,c/=2)i+=s[b&1?b++:0]+s[c&1?--c:0];printf("%ld ",i);}}
