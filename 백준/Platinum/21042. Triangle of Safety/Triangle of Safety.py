@@ -1,5 +1,2 @@
-a = ord('A')
-for i in 'QWERTYUIOPASDFGHJKLXCVBNM':
-    o = ord(i)
-    for x,y in [(1,12), (2,8), (3,10), (4,9)]:
-        print(i+chr(a+(o-a+x)%25)+chr(a+(o-a+y)%25))
+for i in'QWERTYUIOPASDFGHJKLXCVBNM':
+ for x,y in[(1,12),(2,8),(3,10),(4,9)]:print(i+chr(65+((o:=ord(i))-65+x)%25)+chr(65+(o-65+y)%25))
