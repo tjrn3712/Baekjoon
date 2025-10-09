@@ -1,1 +1,1 @@
-print('yes\n'*int(input()),end='')
+print('yes\n'*int(input()))
