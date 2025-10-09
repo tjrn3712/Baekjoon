@@ -1,1 +1,1 @@
-for i in range(25):[print(chr(i+65)+chr(65+(i+x)%25)+chr(65+(i+y)%25))for x,y in[(1,12),(2,8),(3,10),(4,9)]]
+for k in range(100):print(chr(65+k//4)+chr(65+(k//4+k%4+1)%25)+chr(65+(k//4+b"\f\b\n\t"[k%4])%25))
