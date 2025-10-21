@@ -1,1 +1,1 @@
-for k in range(100):print(chr(65+k//4)+chr(65+(k//4+k%4+1)%25)+chr(65+(k//4+b"\f\b\n\t"[k%4])%25))
+for k in range(100):a=k//4;print("%c"*3%(65+a,65+(a+k%4+1)%25,65+(a+b"WSUT"[k&3])%25))
