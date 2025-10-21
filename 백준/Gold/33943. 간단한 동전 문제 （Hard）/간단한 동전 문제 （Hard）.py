@@ -6,7 +6,8 @@ def minput(): return map(int, input().split())
 n, m = minput()
 if m==0: exit(print(0))
 if n==0: exit(print(-1))
-p = [*minput()]
+a = [*minput()]
+p = [i for i in a if i]
 q = deque()
 q.append((10000,0))
 coin = [0]*20001
