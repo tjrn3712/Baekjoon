@@ -22,7 +22,7 @@ void solve() {
 
     l=1;
     for (r=1;r<=n;r+=B) {
-        while (a[l]*1ll*(r-l+1)-(ps[r]-ps[l-1])>A*1ll*(((l-1)/B)+1)) l++;
+        for (;a[l]*1ll*(r-l+1)-(ps[r]-ps[l-1])>A*1ll*(((l-1)/B)+1);l++);
         if (l==r) dp[0]=max(dp[0], a[r]+A*1ll*(((r-1)/B)+1));
         else {
             i = (r-1)/B-(((l-1)/B)+1);
