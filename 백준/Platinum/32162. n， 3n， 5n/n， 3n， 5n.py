@@ -12,4 +12,4 @@ t = int(input())
 for i in range(t):
     n = int(input())-1
     n*=3
-    print(p[ans[n]]*4096+p[ans[n+1]]*64+p[ans[n+2]])
+    sys.stdout.write(str(p[ans[n]]*4096+p[ans[n+1]]*64+p[ans[n+2]])+'\n')
