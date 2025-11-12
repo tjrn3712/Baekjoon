@@ -14,8 +14,12 @@ for j in range(n):
     if j==n-1:break
     c = [-998244353]*m
     for i in range(m):
-        c[i]=max(c[i],a[i],b[i])
-        if i>0:c[i-1]=max(c[i],a[i-1],b[i-1])
-        if i+1<m:c[i+1]=max(c[i],a[i+1],b[i+1])
+        c[i]=max(c[i],a[i])
+        if i>0:c[i-1]=max(c[i-1],a[i])
+        if i+1<m:c[i+1]=max(c[i+1],a[i])
+    for i in range(m):
+        c[i]=max(c[i],b[i])
+        if i>0:c[i-1]=max(c[i-1],b[i])
+        if i+1<m:c[i+1]=max(c[i+1],b[i])
     a=c[:]
 print(ans)
