@@ -33,6 +33,11 @@ int main(){
             if (!(nx>0&&nx<=n&&ny>0&&ny<=n)||visited[nx][ny]) continue;
             m=possibleMove(visited,nx,ny);
             if (m<best) best=m,tx=nx,ty=ny;
+        }
+        for (int j=0;j<8;j++) {
+            nx=x+dx[j],ny=y+dy[j];
+            if (!(nx>0&&nx<=n&&ny>0&&ny<=n)||visited[nx][ny]) continue;
+            m=possibleMove(visited,nx,ny);
             if (m==best) c.push_back({nx,ny});
         }
         if (tx==-1) {
@@ -43,7 +48,7 @@ int main(){
         best=998244353;
         for (pos p:c) {
             now=min(abs(1-p.x),abs(n-p.x))+min(abs(1-p.y),abs(n-p.y));
-            if (now<best) tx=p.x,ty=p.y;
+            if (now<best) best=now,tx=p.x,ty=p.y;
         }
         x=tx,y=ty;
         visited[x][y]=1;
