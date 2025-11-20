@@ -96,6 +96,47 @@ int main(){
         }
     }
     if (!ok) {
+            if (!ok) {
+        ok=1;
+        x=ox,y=oy;
+        vector<vector<bool>> visited(n+1,vector<bool>(n+1,0));
+        ans.clear();
+
+        visited[x][y]=1;
+        ans.push_back({x,y});
+
+        for (int i=0;i<n*n-1;i++) {
+            best=9,tx=-1,ty=-1;
+            vector<pos> c;
+            for (int j=0;j<8;j++) {
+                nx=x+dx[j],ny=y+dy[j];
+                if (!(nx>0&&nx<=n&&ny>0&&ny<=n)||visited[nx][ny]) continue;
+                m=possibleMove(visited,nx,ny);
+                if (m<best) best=m,tx=nx,ty=ny;
+            }
+            for (int j=0;j<8;j++) {
+                nx=x+dx[j],ny=y+dy[j];
+                if (!(nx>0&&nx<=n&&ny>0&&ny<=n)||visited[nx][ny]) continue;
+                m=possibleMove(visited,nx,ny);
+                if (m==best) c.push_back({nx,ny});
+            }
+            if (tx==-1) {
+                ok=0;
+                break;
+            }
+
+            best=-1;
+            for (pos p:c) {
+                now=abs(n/2-p.x)+abs(n/2-p.y);
+                if (now<best) best=now,tx=p.x,ty=p.y;
+            }
+            x=tx,y=ty;
+            visited[x][y]=1;
+            ans.push_back({x,y});
+        }
+    }
+    }
+    if (!ok) {
         cout<<"-1 -1";
         return 0;
     }
