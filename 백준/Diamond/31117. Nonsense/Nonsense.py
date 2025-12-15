@@ -38,7 +38,7 @@ while True:
         t=pow(x-y,-1,998244353)
         for a in range(A+1):
             for b in range(B+1):
-                dp[a][b]=(((dp[a][b-1]if b else 0)-(dp[a-1][b]if a else 0)-(np1C[b]*pow(y,n+1-b,998244353)%998244353if a==0and b<n else 0)+(np1C[a]*pow(x,n+1-a,998244353)%998244353if b==0and a<n else 0))%998244353*t)%998244353
+                dp[a][b]=(((dp[a][b-1]if b else 0)-(dp[a-1][b]if a else 0)-(np1C[b]*pow(y,n+1-b,998244353)%998244353if a==0and b<=n+1 else 0)+(np1C[a]*pow(x,n+1-a,998244353)%998244353if b==0and a<=n+1 else 0))%998244353*t)%998244353
 
         for a,b in query:
             print(dp[a][b])
